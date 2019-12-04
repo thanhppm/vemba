@@ -1,0 +1,44 @@
+<?php
+require_once "./lib/database/class_database.php";
+require_once "./config/index.php";
+require_once "./inc/views/send_mail.php";
+
+if ($_POST["submit"]) {
+    $DB = new database($hostname, $userhost, $passhost, $dbname);
+    $DB->connect();
+    $html = '<h3>Thông tin người dùng </h3><br/>';
+    $fields = [];
+    foreach ($_POST as $key => $value) {
+        if ($key !== "submit" && $key !== "lang") {
+            $fields[] = "`" . $key . "`";
+            $datas[] = "'" . $value . "'";
+            $html .= ucfirst(str_replace('_',' ',$key)) . " : " . $value . "<br/>";
+        }
+    }
+    $date = new DateTime();
+    $fields[] = "created_date";
+    $datas[] = "'".$date->format('Y-m-d')."'";
+
+    $html .=  "Ngày đăng ký : " . $date->format('d-m-Y') . "<br/>";
+    $fields = implode(',', $fields);
+    $values = implode(',', $datas);
+    $sql = " insert into `$tablename` ( $fields) values ($values)";
+    $DB->query($sql);
+    if(!empty($DB->getError())){
+        echo "<pre>";
+        print_r($DB->getError());
+        echo "</pre>";die();
+    }
+    if (!$DB->getResult()) {
+        echo "<script type='text/javascript'>";
+        echo "window.location.href='$base_url'";
+        echo "</script>";
+    }
+    sendMail( $email_config,$html);
+    $DB->disconnect();
+} else {
+
+    echo "<script type='text/javascript'>";
+    echo "window.location.href='$base_url'";
+    echo "</script>";
+}
